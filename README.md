@@ -354,6 +354,4 @@ All JSON responses use `{"ok": true, "data": …}` or `{"ok": false, "error": {"
 
 
 
-
-
 Third-party assets: Chart.js (MIT), Lucide (ISC), Inter and JetBrains Mono (SIL Open Font License). Licence files are in `static/vendor/`.
