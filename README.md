@@ -352,27 +352,8 @@ All JSON responses use `{"ok": true, "data": …}` or `{"ok": false, "error": {"
 - Iterative trace mode (root → TLD → authoritative) performed by DNSGuard itself.
 - Evaluation of diagnostic classification accuracy against a hand-labelled test set, as suggested in the synopsis.
 
-## Team
 
-| Name | Enrolment no. |
-|---|---|
-| Aryan Sharma | 2401030159 |
-| Sachit Verma | 2401030149 |
-| Atharv Aditya | 2401030133 |
-| Vanshaj Misra | 2401030155 |
 
-Submitted to **Mrs. Meenal Jain**. Computer Networks, B.Tech CSE, third year, semester 5, JIIT Noida.
 
-## References
-
-- Mockapetris, P. (1987). *Domain Names — Concepts and Facilities*. RFC 1034.
-- Mockapetris, P. (1987). *Domain Names — Implementation and Specification*. RFC 1035.
-- Andrews, M. (1998). *Negative Caching of DNS Queries (DNS NCACHE)*. RFC 2308.
-- Thomson, S. et al. (2003). *DNS Extensions to Support IP Version 6*. RFC 3596.
-- Dickinson, J. et al. (2016). *DNS Transport over TCP — Implementation Requirements*. RFC 7766.
-- dnspython documentation — https://dnspython.readthedocs.io/
-- Flask documentation — https://flask.palletsprojects.com/
-- Google Public DNS — https://developers.google.com/speed/public-dns
-- Cloudflare 1.1.1.1 — https://developers.cloudflare.com/1.1.1.1/
 
 Third-party assets: Chart.js (MIT), Lucide (ISC), Inter and JetBrains Mono (SIL Open Font License). Licence files are in `static/vendor/`.
