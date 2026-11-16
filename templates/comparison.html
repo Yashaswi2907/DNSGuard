@@ -1,0 +1,74 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Resolver Comparison</h1>
+    <p>Google Public DNS and Cloudflare DNS, queried with the same domain, record type, timeout and number of attempts.</p>
+  </div>
+</div>
+
+<form class="panel" id="cmp-form" novalidate>
+  <div class="toolbar" style="border-bottom:0">
+    <div class="field grow" id="f-domain">
+      <label for="c-domain">Domain name</label>
+      <div class="input-wrap"><i data-lucide="globe"></i><input class="input" style="padding-left:40px;font-family:var(--mono)" id="c-domain" placeholder="example.com" autocomplete="off" spellcheck="false" maxlength="253"></div>
+      <div class="field-error" id="c-domain-error"></div>
+    </div>
+    <div class="field"><label for="c-type">Record type</label><select class="select" id="c-type"><option value="A">A (IPv4)</option><option value="AAAA">AAAA (IPv6)</option></select></div>
+    <div class="field"><label for="c-att">Attempts per resolver</label><select class="select" id="c-att">{% for n in allowed_attempts %}<option value="{{ n }}" {% if n == 5 %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+    <div class="field"><label for="c-timeout">Timeout</label><select class="select" id="c-timeout">{% for t in [1, 2, 3, 5, 10] %}<option value="{{ t }}" {% if t == 2 %}selected{% endif %}>{{ t }} s</option>{% endfor %}</select></div>
+    <button class="btn btn-primary" id="c-run" type="submit" style="height:40px"><i data-lucide="git-compare-arrows"></i>Compare resolvers</button>
+  </div>
+  <div id="c-progress" class="hidden" style="padding:0 20px 18px">
+    <div class="progress"><span id="c-bar"></span></div>
+    <div class="progress-meta"><span id="c-ptext">Starting…</span><span id="c-ppct">0%</span></div>
+  </div>
+</form>
+
+<div class="panel" id="cmp-source" style="padding:12px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <i data-lucide="database" class="icon-sm" style="color:var(--muted)"></i>
+  <label for="c-pick" class="muted" style="font-size:13px">Showing</label>
+  <select class="select" id="c-pick" style="max-width:520px;height:34px"></select>
+  <span class="muted" style="font-size:12.5px" id="c-pick-note"></span>
+</div>
+
+<div id="cmp-empty" class="panel hidden"><div class="empty"><div class="empty-icon"><i data-lucide="git-compare-arrows"></i></div><h3>No comparison yet</h3><p>Enter a domain above and select Compare resolvers. Both resolvers receive identical queries so the results can be compared side by side.</p></div></div>
+
+<div id="cmp-body" class="hidden" style="display:flex;flex-direction:column;gap:18px">
+  <div id="cmp-callout"></div>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2 id="cmp-title">Side by side</h2><div class="sub" id="cmp-sub"></div></div><div style="display:flex;gap:8px"><a class="btn btn-sm" id="cmp-report" href="#"><i data-lucide="file-search"></i>Report</a><a class="btn btn-sm btn-ghost" id="cmp-csv" href="#"><i data-lucide="file-spreadsheet"></i>CSV</a></div></div>
+    <div class="panel-body flush"><div class="vs-grid" id="vs"></div></div>
+  </section>
+
+  <div class="grid cols-2">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Google vs Cloudflare latency</h2><div class="sub">Per attempt, successful answers only; dashed lines are medians</div></div><div id="lat-legend"></div></div>
+      <div class="panel-body"><div class="chart-box" id="lat-box"><canvas id="lat-chart" aria-label="Latency per attempt by resolver"></canvas></div></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h2>Successful vs failed requests</h2><div class="sub">Attempt outcomes per resolver</div></div>
+        <div class="legend"><span><i style="background:var(--ok)"></i>Successful</span><span><i style="background:var(--info)"></i>No record</span><span><i style="background:var(--err)"></i>Failed</span></div></div>
+      <div class="panel-body"><div class="chart-box" id="out-box"><canvas id="out-chart" aria-label="Outcomes per resolver"></canvas></div></div>
+    </section>
+  </div>
+
+  <div class="grid cols-2">
+    <section class="panel">
+      <div class="panel-head"><div><h2>DNS record differences</h2><div class="sub" id="rec-sub"></div></div></div>
+      <div class="panel-body" id="rec-diff"></div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><div><h2>Response classification</h2><div class="sub">Count of each response type per resolver</div></div><div id="cls-legend"></div></div>
+      <div class="panel-body"><div class="chart-box" id="cls-box"><canvas id="cls-chart" aria-label="Response classification per resolver"></canvas></div></div>
+    </section>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><div><h2>Observations</h2><div class="sub">Differences are reported as observations, not automatically as errors</div></div></div>
+    <div class="panel-body" id="obs"></div>
+  </section>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/comparison.js') }}"></script>{% endblock %}

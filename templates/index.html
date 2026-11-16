@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block body_class %}landing{% endblock %}
+{% block chart_lib %}{% endblock %}
+{% block body %}
+<header class="l-nav">
+  <a class="brand" href="/">{% with logo_id='nav' %}{% include "partials/logo.html" %}{% endwith %}<span>DNSGuard</span></a>
+  <nav class="l-links" aria-label="Page sections">
+    <a href="#features">Features</a>
+    <a href="#preview">Resolvers</a>
+    <a href="#how">How it works</a>
+    <a href="#architecture">Architecture</a>
+    <a href="/about">About DNS</a>
+  </nav>
+  <div class="spacer"></div>
+  <button class="btn btn-ghost icon-btn" id="theme-toggle" aria-label="Switch theme"><i data-lucide="sun-moon"></i></button>
+  <a class="btn btn-sm" href="/dashboard">Open dashboard</a>
+</header>
+
+<main id="main">
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div>
+        <h1><span class="line">Understand Your DNS.</span><span class="line">Measure Your Network.</span><span class="line">Diagnose with Confidence.</span></h1>
+        <p class="hero-lede">DNSGuard sends real A and AAAA queries to Google Public DNS and Cloudflare DNS, times every attempt, classifies each response code, and explains what the results do — and do not — tell you.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary btn-lg" href="/diagnostics"><i data-lucide="radar"></i>Start Diagnostics</a>
+          <a class="btn btn-lg" href="/dashboard"><i data-lucide="layout-dashboard"></i>Explore Dashboard</a>
+        </div>
+        <div class="hero-meta">
+          <span><i data-lucide="shield-check" class="icon-sm"></i>No simulated results</span>
+          <span><i data-lucide="network" class="icon-sm"></i>UDP/53 with TCP fallback</span>
+          <span><i data-lucide="database" class="icon-sm"></i>History kept locally in SQLite</span>
+        </div>
+      </div>
+
+      <div class="panel trace-card" aria-label="Animated illustration of recursive DNS resolution">
+        <div class="trace-head"><span class="dots"><i></i><i></i><i></i></span>How one lookup travels <span style="margin-left:auto" class="q">www.example.com IN A</span></div>
+        <div class="trace-svg">
+          <svg viewBox="0 0 560 270" role="img" aria-labelledby="trace-title">
+            <title id="trace-title">A client asks a recursive resolver, which asks the root, TLD and authoritative name servers in turn.</title>
+            <g id="trace-links">
+              <path class="net-link" data-seg="0" d="M120 135 H205"/>
+              <path class="net-link" data-seg="1" d="M355 135 L420 50"/>
+              <path class="net-link" data-seg="2" d="M355 135 H420"/>
+              <path class="net-link" data-seg="3" d="M355 135 L420 220"/>
+            </g>
+            <g class="net-node" data-node="client" transform="translate(10 105)"><rect width="110" height="60" rx="10"/><text x="14" y="27">Your device</text><text class="sub" x="14" y="45">stub resolver</text></g>
+            <g class="net-node" data-node="resolver" transform="translate(205 95)"><rect width="150" height="80" rx="10"/><text x="14" y="28">Recursive</text><text x="14" y="46">resolver</text><text class="sub" x="14" y="65">8.8.8.8 / 1.1.1.1</text></g>
+            <g class="net-node" data-node="root" transform="translate(420 22)"><rect width="130" height="56" rx="10"/><text x="14" y="25">Root server</text><text class="sub" x="14" y="43">"."</text></g>
+            <g class="net-node" data-node="tld" transform="translate(420 107)"><rect width="130" height="56" rx="10"/><text x="14" y="25">TLD server</text><text class="sub" x="14" y="43">.com</text></g>
+            <g class="net-node" data-node="auth" transform="translate(420 192)"><rect width="130" height="56" rx="10"/><text x="14" y="25">Authoritative</text><text class="sub" x="14" y="43">example.com</text></g>
+            <text class="net-label" data-label="0" x="128" y="124">UDP :53</text>
+            <circle id="packet" class="packet" r="5" cx="-20" cy="-20"/>
+          </svg>
+        </div>
+        <div class="trace-log" id="trace-log" aria-live="off"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="features">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Four tools, one question: is DNS doing its job?</h2>
+        <p>Each test sends the same query, with the same timeout and the same number of attempts, to both resolvers so the results can be compared fairly.</p>
+      </div>
+      <div class="features">
+        <div class="feature"><div class="f-icon"><i data-lucide="git-compare-arrows"></i></div><h3>DNS resolver comparison</h3><p>See both resolvers side by side: returned addresses, response codes, record consistency and which one answered faster in this test.</p></div>
+        <div class="feature"><div class="f-icon"><i data-lucide="gauge"></i></div><h3>Real-time latency analysis</h3><p>Every attempt is timed with a high-resolution clock. Median latency uses successful answers only, so a timeout never skews the figure.</p></div>
+        <div class="feature"><div class="f-icon"><i data-lucide="list-checks"></i></div><h3>DNS error classification</h3><p>NOERROR with records, NOERROR without the requested record, NXDOMAIN, SERVFAIL, REFUSED and timeouts are each identified separately.</p></div>
+        <div class="feature"><div class="f-icon"><i data-lucide="stethoscope"></i></div><h3>Intelligent diagnostics</h3><p>Fixed, auditable rules explain each outcome and suggest follow-up checks, without claiming a root cause the evidence cannot support.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="preview">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Google Public DNS and Cloudflare DNS</h2>
+        <p id="preview-lede">Two of the most widely used public recursive resolvers. The figures below come only from tests run on this installation.</p>
+      </div>
+      <div class="preview" id="preview-cards"></div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>How a DNSGuard test works</h2>
+        <p>The same flow described in the project synopsis, from input to stored report.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><h3>Choose the query</h3><p>Enter a domain, pick an A (IPv4) or AAAA (IPv6) record, the resolvers, the number of attempts and a timeout.</p></div>
+        <div class="step"><h3>Send real queries</h3><p>dnspython builds a DNS message with recursion desired and sends it over UDP port 53, retrying over TCP if the answer is truncated.</p></div>
+        <div class="step"><h3>Classify and measure</h3><p>Each response code is classified, the CNAME chain is followed, and latency, success count and failure rate are calculated.</p></div>
+        <div class="step"><h3>Explain and store</h3><p>Rule-based diagnostics explain the outcome, the resolvers are compared, and the full report is saved to SQLite.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="architecture">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Technical architecture</h2>
+        <p>Separate layers for the interface, the HTTP API, the DNS engine, the diagnostic rules and storage.</p>
+      </div>
+      <div class="arch">
+        <div class="arch-layer"><h4><i data-lucide="monitor"></i>Interface</h4><ul><li>Jinja templates</li><li>ES6 modules</li><li>Chart.js</li><li>Lucide icons</li></ul></div>
+        <div class="arch-layer"><h4><i data-lucide="route"></i>Flask API</h4><ul><li>routes/dns_routes</li><li>routes/history_routes</li><li>validation, CSRF</li><li>rate limiting</li></ul></div>
+        <div class="arch-layer"><h4><i data-lucide="cpu"></i>DNS engine</h4><ul><li>query_handler</li><li>response_classifier</li><li>performance</li><li>resolver allow-list</li></ul></div>
+        <div class="arch-layer"><h4><i data-lucide="stethoscope"></i>Diagnostics</h4><ul><li>diagnostic_engine</li><li>per-outcome rules</li><li>cross-resolver rules</li></ul></div>
+        <div class="arch-layer"><h4><i data-lucide="database"></i>Storage</h4><ul><li>SQLite</li><li>tests</li><li>query_attempts</li><li>CSV / JSON export</li></ul></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-grid">
+    <div>
+      <a class="brand" href="/" style="padding:0 0 10px">{% with logo_id='foot' %}{% include "partials/logo.html" %}{% endwith %}<span>DNSGuard</span></a>
+      <p>DNS Diagnostics and Resolver Reliability Analysis System. Computer Networks project, B.Tech CSE, third year, semester 5.</p>
+      <p style="margin-top:8px">Department of CSE &amp; IT, Jaypee Institute of Information Technology, Sector-62, Noida.</p>
+    </div>
+    <div>
+      <h4>Team</h4>
+      <ul><li>Aryan Sharma (2401030159)</li><li>Sachit Verma (2401030149)</li><li>Atharv Aditya (2401030133)</li><li>Vanshaj Misra (2401030155)</li></ul>
+      <p style="margin-top:10px">Submitted to Mrs. Meenal Jain</p>
+    </div>
+    <div>
+      <h4>Explore</h4>
+      <ul><li><a href="/diagnostics">Run a diagnostic</a></li><li><a href="/comparison">Compare resolvers</a></li><li><a href="/history">Test history</a></li><li><a href="/about">DNS concepts</a></li></ul>
+      <p style="margin-top:10px">References: RFC 1034, RFC 1035, RFC 2308, RFC 3596.</p>
+    </div>
+  </div>
+</footer>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/landing.js') }}"></script>{% endblock %}

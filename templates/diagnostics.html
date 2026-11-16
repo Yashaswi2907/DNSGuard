@@ -1,0 +1,118 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>DNS Diagnostics</h1>
+    <p>Send real DNS queries to the public resolvers, time each attempt and classify every response.</p>
+  </div>
+</div>
+
+<div class="grid cols-side-main" style="align-items:start">
+  <form class="panel" id="dns-form" novalidate style="position:sticky;top:calc(var(--topbar-h) + 20px)">
+    <div class="panel-head"><div><h2>Test settings</h2><div class="sub">Both resolvers get identical settings</div></div></div>
+    <div class="panel-body" style="display:flex;flex-direction:column;gap:18px">
+      <div class="field" id="f-domain">
+        <label for="domain">Domain name</label>
+        <div class="input-wrap"><i data-lucide="globe"></i><input class="input input-lg" id="domain" name="domain" placeholder="example.com" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="253" required></div>
+        <div class="field-error" id="domain-error"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" aria-label="Example domains">
+          {% for ex, tip in [("google.com", "Usually answers both A and AAAA"), ("www.wikipedia.org", "Usually involves a CNAME chain"), ("github.com", "Often has no AAAA record (NOERROR, no record)"), ("nonexistent-domain.invalid", ".invalid is reserved and never exists (NXDOMAIN)")] %}
+          <button type="button" class="chip example" data-domain="{{ ex }}" data-tip="{{ tip }}" style="border:0;cursor:pointer;font-family:var(--mono)">{{ ex }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label" id="rt-label">Record type <span class="help" data-tip="A returns IPv4 addresses (32-bit). AAAA returns IPv6 addresses (128-bit)."><i data-lucide="info"></i></span></span>
+        <div class="segmented full" role="radiogroup" aria-labelledby="rt-label">
+          <input type="radio" name="record_type" id="rt-a" value="A" checked><label for="rt-a">A <span class="muted">IPv4</span></label>
+          <input type="radio" name="record_type" id="rt-aaaa" value="AAAA"><label for="rt-aaaa">AAAA <span class="muted">IPv6</span></label>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label" id="res-label">Resolvers</span>
+        <div class="segmented full" role="radiogroup" aria-labelledby="res-label">
+          <input type="radio" name="resolvers" id="res-g" value="google"><label for="res-g"><span class="swatch google"></span>Google</label>
+          <input type="radio" name="resolvers" id="res-c" value="cloudflare"><label for="res-c"><span class="swatch cloudflare"></span>Cloudflare</label>
+          <input type="radio" name="resolvers" id="res-b" value="both" checked><label for="res-b">Both</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label" id="att-label">Repeated queries per resolver</span>
+        <div class="segmented full" role="radiogroup" aria-labelledby="att-label">
+          {% for n in allowed_attempts %}<input type="radio" name="attempts" id="att-{{ n }}" value="{{ n }}" {% if n == 5 %}checked{% endif %}><label for="att-{{ n }}">{{ n }}</label>{% endfor %}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="timeout">Query timeout <span class="help" data-tip="How long to wait for each reply. Attempts with no reply in this time are recorded as TIMEOUT failures."><i data-lucide="info"></i></span></label>
+        <div class="range-row"><input type="range" id="timeout" name="timeout" min="{{ timeout_min }}" max="{{ timeout_max }}" step="0.5" value="{{ timeout_default }}"><output class="range-value" id="timeout-out" for="timeout">{{ timeout_default }} s</output></div>
+      </div>
+
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-primary btn-lg" id="run-btn" style="flex:1"><i data-lucide="play"></i>Run DNS Diagnostic</button>
+        <button type="button" class="btn btn-lg" id="reset-btn" data-tip="Clear the form and results">Reset</button>
+      </div>
+      <p class="muted" style="font-size:12.5px;display:flex;gap:8px"><i data-lucide="lock" class="icon-sm"></i><span>Queries are sent only to 8.8.8.8 and 1.1.1.1 over UDP port 53, with a TCP retry if a reply is truncated.</span></p>
+    </div>
+  </form>
+
+  <div id="results" style="display:flex;flex-direction:column;gap:18px;min-width:0" aria-live="polite">
+    <section class="panel" id="state-idle">
+      <div class="empty">
+        <div class="empty-icon"><i data-lucide="radar"></i></div>
+        <h3>Ready to test</h3>
+        <p>Enter a domain and choose a record type, then run the diagnostic. You will see each attempt as it completes, then the records, latency statistics and an explanation of the outcome.</p>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="state-running">
+      <div class="panel-head"><div><h2 id="run-title">Running queries…</h2><div class="sub" id="run-sub"></div></div><span class="badge info"><i data-lucide="loader-circle"></i>In progress</span></div>
+      <div class="panel-body">
+        <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><span id="progress-bar"></span></div>
+        <div class="progress-meta"><span id="progress-text">0 of 0 queries</span><span id="progress-pct">0%</span></div>
+        <div id="ticks"></div>
+      </div>
+    </section>
+
+    <section class="panel hidden" id="state-error">
+      <div class="empty error"><div class="empty-icon"><i data-lucide="triangle-alert"></i></div><h3>The test could not run</h3><p id="error-text"></p><button class="btn" id="retry-btn" type="button">Try again</button></div>
+    </section>
+
+    <div id="state-done" class="hidden" style="display:flex;flex-direction:column;gap:18px">
+      <section class="panel">
+        <div class="summary-strip">
+          <div class="headline" id="sum-headline"></div>
+          <div class="facts" id="sum-facts"></div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;padding:0 20px 16px">
+          <a class="btn btn-sm" id="act-compare" href="#"><i data-lucide="git-compare-arrows"></i>Open comparison</a>
+          <a class="btn btn-sm" id="act-report" href="#"><i data-lucide="file-search"></i>Diagnostic report</a>
+          <a class="btn btn-sm btn-ghost" id="act-csv" href="#"><i data-lucide="file-spreadsheet"></i>Export CSV</a>
+          <a class="btn btn-sm btn-ghost" id="act-json" href="#"><i data-lucide="file-json"></i>Export JSON</a>
+        </div>
+      </section>
+
+      <div class="grid cols-2" id="res-cards"></div>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Individual query latency</h2><div class="sub">Successful attempts only; dashed lines mark each resolver's median</div></div><div id="lat-legend"></div></div>
+        <div class="panel-body"><div class="chart-box" id="lat-box"><canvas id="lat-chart" aria-label="Latency per attempt"></canvas></div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Diagnosis</h2><div class="sub">Rule-based explanation of what was observed</div></div></div>
+        <div class="panel-body" id="diagnosis"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><div><h2>Query attempts</h2><div class="sub">Select a row to inspect the full response</div></div></div>
+        <div class="panel-body flush" id="attempts"></div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/diagnostics.js') }}"></script>{% endblock %}

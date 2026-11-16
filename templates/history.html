@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Test History</h1>
+    <p>Every test stored in the local SQLite database. History is kept across restarts.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn" href="/api/history/export/csv" id="exp-csv"><i data-lucide="file-spreadsheet"></i>Export CSV</a>
+    <a class="btn" href="/api/history/export/json" id="exp-json"><i data-lucide="file-json"></i>Export JSON</a>
+    <button class="btn btn-danger" id="clear-all"><i data-lucide="trash-2"></i>Clear history</button>
+  </div>
+</div>
+
+<section class="panel">
+  <form class="toolbar" id="filters" role="search">
+    <div class="field grow"><label for="h-q">Search by domain</label><div class="input-wrap"><i data-lucide="search"></i><input class="input" id="h-q" style="padding-left:40px" placeholder="e.g. google" autocomplete="off"></div></div>
+    <div class="field"><label for="h-from">From</label><input class="input" type="date" id="h-from"></div>
+    <div class="field"><label for="h-to">To</label><input class="input" type="date" id="h-to"></div>
+    <div class="field"><label for="h-type">Record type</label><select class="select" id="h-type"><option value="">All</option><option>A</option><option>AAAA</option></select></div>
+    <div class="field"><label for="h-outcome">Outcome</label><select class="select" id="h-outcome"><option value="">All</option><option value="SUCCESS">Success</option><option value="PARTIAL">Partial</option><option value="NOERROR_NODATA">No record</option><option value="NXDOMAIN">NXDOMAIN</option><option value="SERVFAIL">SERVFAIL</option><option value="TIMEOUT">Timeout</option><option value="FAILED">Failed</option></select></div>
+    <button type="button" class="btn btn-ghost" id="h-clear" style="height:40px">Clear filters</button>
+  </form>
+  <div id="h-table"><div style="padding:20px"><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div></div>
+  <div class="pager"><span id="h-count"></span><div style="display:flex;gap:8px"><button class="btn btn-sm" id="h-prev"><i data-lucide="chevron-left"></i>Previous</button><button class="btn btn-sm" id="h-next">Next<i data-lucide="chevron-right"></i></button></div></div>
+</section>
+{% endblock %}
+{% block chart_lib %}{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/history.js') }}"></script>{% endblock %}

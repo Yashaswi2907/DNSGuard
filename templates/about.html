@@ -1,0 +1,116 @@
+{% extends "layout.html" %}
+{% block chart_lib %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>About DNS</h1>
+    <p>The Computer Networks concepts behind DNSGuard, explained in the order you would meet them during a single lookup.</p>
+  </div>
+  <div class="page-actions"><a class="btn" href="#viva"><i data-lucide="graduation-cap"></i>Viva questions</a></div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><div><h2>DNS resolution workflow</h2><div class="sub">Step through a recursive lookup for www.example.com (A record)</div></div></div>
+  <div class="flow-wrap">
+    <div class="flow-svg">
+      <svg viewBox="0 0 640 360" role="img" aria-labelledby="flow-title" id="flow">
+        <title id="flow-title">Client, stub resolver, recursive resolver with cache, root server, TLD server and authoritative server</title>
+        <path class="net-link" data-l="1" d="M150 180 H245"/>
+        <path class="net-link" data-l="2" d="M395 150 L470 70"/>
+        <path class="net-link" data-l="3" d="M395 180 H470"/>
+        <path class="net-link" data-l="4" d="M395 210 L470 290"/>
+        <text class="net-label" data-t="1" x="160" y="168">UDP/53 query</text>
+        <text class="net-label" data-t="2" x="400" y="96">iterative</text>
+        <text class="net-label" data-t="3" x="402" y="172">iterative</text>
+        <text class="net-label" data-t="4" x="400" y="272">iterative</text>
+        <g class="net-node" data-n="client" transform="translate(10 140)"><rect width="140" height="80" rx="10"/><text x="14" y="30">Your computer</text><text class="sub" x="14" y="50">browser + OS</text><text class="sub" x="14" y="66">stub resolver</text></g>
+        <g class="net-node" data-n="resolver" transform="translate(245 120)"><rect width="150" height="120" rx="10"/><text x="14" y="30">Recursive resolver</text><text class="sub" x="14" y="50">8.8.8.8 or 1.1.1.1</text><text class="sub" x="14" y="66">does the legwork</text></g>
+        <g class="net-node" data-n="cache" transform="translate(259 196)"><rect width="122" height="32" rx="7"/><text class="sub" x="12" y="21">cache (TTL)</text></g>
+        <g class="net-node" data-n="root" transform="translate(470 30)"><rect width="160" height="70" rx="10"/><text x="14" y="30">Root server</text><text class="sub" x="14" y="50">"." knows TLDs</text></g>
+        <g class="net-node" data-n="tld" transform="translate(470 145)"><rect width="160" height="70" rx="10"/><text x="14" y="30">TLD server</text><text class="sub" x="14" y="50">.com knows domains</text></g>
+        <g class="net-node" data-n="auth" transform="translate(470 260)"><rect width="160" height="70" rx="10"/><text x="14" y="30">Authoritative</text><text class="sub" x="14" y="50">example.com zone</text></g>
+      </svg>
+    </div>
+    <div class="flow-steps">
+      <div class="muted" style="font-size:12.5px" id="flow-count">Step 1 of 7</div>
+      <div class="flow-step-title" id="flow-title-text"></div>
+      <div class="flow-step-body" id="flow-body"></div>
+      <div class="flow-controls">
+        <button class="btn btn-sm" id="flow-prev"><i data-lucide="chevron-left"></i>Back</button>
+        <button class="btn btn-sm btn-primary" id="flow-next">Next<i data-lucide="chevron-right"></i></button>
+        <button class="btn btn-sm btn-ghost" id="flow-play"><i data-lucide="play"></i>Auto-play</button>
+        <div class="flow-dots" id="flow-dots" role="tablist" aria-label="Workflow steps"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="concept-grid">
+  <section class="panel concept"><h3><i data-lucide="layers"></i>DNS architecture and the application layer</h3>
+    <p>DNS is an application-layer protocol (RFC 1034/1035). It is a distributed, hierarchical database: the root zone delegates top-level domains such as <code>.com</code>, which delegate individual domains to their own authoritative name servers. No single server holds every name.</p>
+    <p style="margin-top:8px">Applications almost always perform a DNS lookup before opening a TCP or QUIC connection, so slow or failed DNS delays everything that follows.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="repeat"></i>Recursive vs iterative resolution</h3>
+    <p>Your computer sends one <b>recursive</b> query with the RD (recursion desired) flag set. The recursive resolver then asks the root, TLD and authoritative servers <b>iteratively</b>, following referrals, and returns the final answer with the RA (recursion available) flag. DNSGuard sets RD on every query, and the attempt details show the returned header flags.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="server"></i>DNS resolvers compared here</h3>
+    <ul>{% for r in resolvers %}<li><b>{{ r.name }}</b>: <code>{{ r.ip }}</code> and <code>{{ r.ipv6 }}</code>, operated by {{ r.operator.rstrip(".") }}.</li>{% endfor %}</ul>
+    <p style="margin-top:8px">Both are anycast services: the same IP address is announced from many locations, and your packets reach whichever instance is closest in routing terms. That is one reason latency differs between networks.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="binary"></i>A and AAAA records, IPv4 and IPv6</h3>
+    <ul>
+      <li><b>A</b> record: a 32-bit IPv4 address, written as four decimal octets, e.g. <code>192.0.2.1</code>.</li>
+      <li><b>AAAA</b> record: a 128-bit IPv6 address (RFC 3596), written as eight hexadecimal groups, e.g. <code>2001:db8::1</code>.</li>
+      <li>A name can have A only, AAAA only, both, or neither. A missing AAAA record is answered with NOERROR and an empty answer section, not an error.</li>
+      <li><b>CNAME</b>: an alias. The resolver follows it and returns the target's records; DNSGuard shows the chain.</li>
+    </ul></section>
+
+  <section class="panel concept"><h3><i data-lucide="network"></i>UDP, and when DNS uses TCP</h3>
+    <p>Ordinary DNS queries use <b>UDP port 53</b>: one request datagram, one response datagram, no connection setup, so a lookup can finish in a single round trip. UDP gives no delivery guarantee, so the client applies a <b>timeout</b> and may retry.</p>
+    <p style="margin-top:8px">If a response is too large for the UDP payload size (DNSGuard advertises 1232 bytes with EDNS0), the server sets the <b>TC</b> (truncated) flag and the client repeats the query over <b>TCP port 53</b> (RFC 7766). DNSGuard does this automatically and marks the attempt as a TCP fallback.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="timer"></i>Query timeout and network latency</h3>
+    <p>Latency is the time between sending the query and receiving the reply, measured here with <code>time.perf_counter()</code>. It includes the round-trip time to the resolver plus any time the resolver spends resolving (zero if the answer is cached).</p>
+    <p style="margin-top:8px">If no reply arrives within the configured timeout, the attempt is recorded as <b>TIMEOUT</b>. A timeout is a failure, and its duration is never used as a latency sample. The <b>median</b> of successful samples is used instead of the mean because one slow outlier barely moves it.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="database-zap"></i>DNS caching and TTL</h3>
+    <p>Every record carries a <b>TTL</b> (time to live) in seconds. Resolvers keep answers in cache until the TTL expires, so a repeated query is usually much faster than the first. Negative answers (NXDOMAIN, no-data) are cached too, for the time set in the zone's SOA record (RFC 2308).</p>
+    <p style="margin-top:8px">In DNSGuard you can often see this: the first attempt is slower (cache miss) and later attempts are faster. The diagnostic engine points this pattern out without claiming it is the only explanation.</p></section>
+
+  <section class="panel concept"><h3><i data-lucide="activity"></i>Resolver reliability</h3>
+    <p>Reliability here means: of the queries sent, how many produced a usable answer, and how quickly. DNSGuard reports the success count and failure rate, <code>(failed ÷ total) × 100</code>, for each resolver over the same set of attempts, and keeps history so you can see whether results are stable over time.</p></section>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><div><h2>DNS response codes</h2><div class="sub">The RCODE field in the DNS header (RFC 1035 §4.1.1), and how DNSGuard classifies each case</div></div></div>
+  <div class="panel-body flush"><div class="table-wrap"><table class="data">
+    <thead><tr><th>Outcome</th><th>RCODE</th><th>Meaning</th><th>Counted as</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge ok"><i data-lucide="circle-check"></i>NOERROR</span></td><td class="mono">0</td><td>The query succeeded and the answer section holds the requested A/AAAA record (possibly after a CNAME chain).</td><td>Success</td></tr>
+      <tr><td><span class="badge info"><i data-lucide="circle-dashed"></i>NOERROR, no record</span></td><td class="mono">0</td><td>The name exists but has no record of the requested type ("NODATA", RFC 2308). Valid answer, not a resolver fault.</td><td>Neither: reported separately</td></tr>
+      <tr><td><span class="badge err"><i data-lucide="circle-x"></i>NXDOMAIN</span></td><td class="mono">3</td><td>Name Error: the domain name does not exist.</td><td>Failure</td></tr>
+      <tr><td><span class="badge err"><i data-lucide="server-crash"></i>SERVFAIL</span></td><td class="mono">2</td><td>The resolver could not complete resolution (unreachable or broken authoritative servers, DNSSEC failure, …).</td><td>Failure</td></tr>
+      <tr><td><span class="badge err"><i data-lucide="ban"></i>REFUSED</span></td><td class="mono">5</td><td>The server declined the query for policy reasons.</td><td>Failure</td></tr>
+      <tr><td><span class="badge warn"><i data-lucide="circle-alert"></i>Other</span></td><td class="mono nowrap">1, 4, …</td><td>FORMERR (format error), NOTIMP (not implemented) and other codes, or an unparseable reply.</td><td>Failure</td></tr>
+      <tr><td><span class="badge err"><i data-lucide="timer-off"></i>Timeout</span></td><td class="mono">none</td><td>No reply within the timeout. Not a DNS response code: there was no response at all.</td><td>Failure</td></tr>
+    </tbody></table></div></div>
+</section>
+
+<section class="panel" id="viva">
+  <div class="panel-head"><div><h2>Viva questions</h2><div class="sub">Short answers to questions examiners commonly ask about this project</div></div></div>
+  <div class="panel-body" style="display:flex;flex-direction:column;gap:8px">
+    {% for q, a in [
+      ("Which layer does DNS belong to, and which transport does it use?", "The application layer. It normally uses UDP port 53, and TCP port 53 for truncated responses, zone transfers and DNS over TCP."),
+      ("Why does DNSGuard use the median instead of the average latency?", "Latency samples are skewed: one slow cache miss can double the mean. The median is the middle value of the sorted samples, so a single outlier hardly changes it."),
+      ("Why are timeouts excluded from the median?", "A timeout means no reply arrived, so its duration only measures the timeout setting, not how fast the resolver answers. Including it would mix two different things. Timeouts are counted in the failure rate instead."),
+      ("What is the difference between NXDOMAIN and NOERROR with no answer?", "NXDOMAIN means the name does not exist at all. NOERROR with an empty answer means the name exists but has no record of the requested type, for example a site with an IPv4 address but no IPv6 address."),
+      ("Why might Google and Cloudflare return different IP addresses?", "Large services use DNS load balancing and geo-based answers, and each resolver may have a different cached copy. DNSGuard reports this as an observation rather than an error."),
+      ("Why can't DNSGuard always name the root cause of a failure?", "A DNS response only tells us what the resolver reported. SERVFAIL, for example, can come from broken delegation, unreachable servers or DNSSEC errors. The diagnostic engine lists the possibilities and the checks that would separate them."),
+      ("How is DNSGuard prevented from being misused as a DNS proxy or scanner?", "Resolvers come from a fixed allow-list (8.8.8.8 and 1.1.1.1), only A and AAAA queries are allowed, attempts and timeouts are bounded, requests are rate-limited, and no client-supplied IP address is ever queried."),
+    ] %}
+    <details class="diag" style="border-left-width:1px"><summary style="cursor:pointer;font-weight:550">{{ q }}</summary><p class="technical" style="margin-top:10px">{{ a }}</p></details>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/about.js') }}"></script>{% endblock %}

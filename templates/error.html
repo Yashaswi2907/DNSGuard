@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block chart_lib %}{% endblock %}
+{% block body %}
+<main id="main" style="min-height:100vh;display:grid;place-items:center;padding:24px">
+  <div class="panel empty error" style="max-width:480px;width:100%">
+    <div class="empty-icon"><i data-lucide="triangle-alert"></i></div>
+    <h3>{{ code }} {{ name }}</h3>
+    <p>{% if code == 404 %}This page does not exist. Check the address, or go back to the dashboard.{% else %}The server could not complete this request. Try again, or return to the dashboard.{% endif %}</p>
+    <div style="display:flex;gap:10px;margin-top:6px"><a class="btn btn-primary" href="/dashboard">Open dashboard</a><a class="btn" href="/">Home</a></div>
+  </div>
+</main>
+{% endblock %}

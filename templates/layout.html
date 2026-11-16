@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% set nav = [
+  ("dashboard", "/dashboard", "layout-dashboard", "Overview"),
+  ("diagnostics", "/diagnostics", "radar", "DNS Diagnostics"),
+  ("comparison", "/comparison", "git-compare-arrows", "Resolver Comparison"),
+  ("analytics", "/analytics", "chart-line", "Performance Analytics"),
+  ("reports", "/reports", "file-search", "Diagnostic Reports"),
+  ("history", "/history", "history", "Test History"),
+  ("about", "/about", "book-open", "About DNS"),
+] %}
+{% block body %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar" aria-label="Main navigation">
+    <a class="brand" href="/">{% with logo_id='side' %}{% include "partials/logo.html" %}{% endwith %}<span>DNSGuard<small>Resolver reliability lab</small></span></a>
+    <nav class="nav-group">
+      {% for key, href, icon, label in nav %}
+        {% if key == 'reports' %}<div class="nav-caption">Records</div>{% endif %}
+        {% if key == 'about' %}<div class="nav-caption">Learn</div>{% endif %}
+        <a class="nav-link" href="{{ href }}" {% if page == key %}aria-current="page"{% endif %}><i data-lucide="{{ icon }}"></i>{{ label }}</a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-foot">
+      <div>Resolvers</div>
+      {% for r in resolvers %}
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="swatch {{ r.key }}"></span><strong>{{ r.short }}</strong><span class="mono" style="margin-left:auto">{{ r.ip }}</span></div>
+      {% endfor %}
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="btn btn-ghost icon-btn menu-btn" id="menu-btn" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false"><i data-lucide="menu"></i></button>
+      <div class="topbar-title">{{ title }}</div>
+      <div class="topbar-spacer"></div>
+      <span class="status-pill" id="sys-status" data-tip="Checks the DNSGuard server and database every 30 seconds. Resolver health is shown on the Overview page."><span class="pulse" id="sys-pulse"></span><span class="label" id="sys-label">Checking…</span></span>
+      <time class="clock" id="clock" aria-live="off"></time>
+      <button class="btn btn-ghost icon-btn" id="theme-toggle" aria-label="Switch theme" data-tip="Switch between dark and light theme"><i data-lucide="sun-moon"></i></button>
+    </header>
+    <main class="content" id="main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

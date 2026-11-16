@@ -1,0 +1,26 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Diagnostic Reports</h1>
+    <p>The full rule-based report for each stored test: what was observed, what it means, and what to check next.</p>
+  </div>
+</div>
+
+<div id="rp-empty" class="panel hidden"><div class="empty"><div class="empty-icon"><i data-lucide="file-search"></i></div><h3>No reports yet</h3><p>A report is created for every test you run. Run a diagnostic to generate the first one.</p><a class="btn btn-primary" href="/diagnostics"><i data-lucide="radar"></i>Run diagnostic</a></div></div>
+
+<div class="grid cols-side-main hidden" id="rp-body" style="align-items:start">
+  <section class="panel no-print">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--line)">
+      <div class="input-wrap"><i data-lucide="search"></i><input class="input" id="rp-search" style="padding-left:40px" placeholder="Filter by domain" aria-label="Filter reports by domain"></div>
+    </div>
+    <div class="report-list" id="rp-list" role="list"></div>
+  </section>
+
+  <article class="panel" id="rp-detail" aria-live="polite">
+    <div class="panel-body"><div class="skeleton sk-line" style="width:40%"></div><div class="skeleton sk-block" style="margin-top:16px"></div></div>
+  </article>
+</div>
+{% endblock %}
+{% block chart_lib %}{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/reports.js') }}"></script>{% endblock %}

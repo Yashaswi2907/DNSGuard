@@ -1,0 +1,68 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Overview</h1>
+    <p id="dash-sub">Totals and resolver health calculated from every query stored on this installation.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn" id="refresh"><i data-lucide="refresh-cw"></i>Refresh</button>
+    <a class="btn btn-primary" href="/diagnostics"><i data-lucide="radar"></i>Run diagnostic</a>
+  </div>
+</div>
+
+<section class="kpis" id="kpis" aria-label="Key metrics">
+  {% for label, icon, id, tip in [
+    ("Total queries", "send", "k-total", "Every DNS query attempt stored in history, across all tests and resolvers."),
+    ("Successful", "circle-check", "k-success", "Attempts that returned NOERROR with at least one record of the requested type."),
+    ("Failed", "circle-x", "k-failed", "Attempts ending in NXDOMAIN, SERVFAIL, REFUSED, another error code, a timeout or a network error."),
+    ("Median latency", "timer", "k-median", "Median response time of successful attempts only. Timeouts and failed responses are excluded."),
+    ("Resolver status", "activity", "k-status", "Based on each resolver's most recent observed attempts, not a live probe."),
+    ("Failure rate", "percent", "k-rate", "(failed attempts ÷ total attempts) × 100."),
+  ] %}
+  <div class="kpi" data-tip="{{ tip }}">
+    <div class="kpi-label"><i data-lucide="{{ icon }}"></i>{{ label }}</div>
+    <div class="kpi-value" id="{{ id }}"><div class="skeleton sk-line" style="width:70%;height:26px"></div></div>
+    <div class="kpi-note" id="{{ id }}-note">&nbsp;</div>
+  </div>
+  {% endfor %}
+</section>
+
+<div id="dash-empty" class="panel hidden">
+  <div class="empty">
+    <div class="empty-icon"><i data-lucide="radar"></i></div>
+    <h3>No measurements yet</h3>
+    <p>Run your first DNS diagnostic. Every chart on this page is built from real stored queries, so it stays empty until a test has been run.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center"><a class="btn btn-primary" href="/diagnostics"><i data-lucide="radar"></i>Run diagnostic</a><a class="btn" href="/comparison">Compare resolvers</a></div>
+  </div>
+</div>
+
+<div class="grid cols-main-side">
+  <section class="panel">
+    <div class="panel-head"><div><h2>DNS query activity</h2><div class="sub">Queries per day for the last 14 days, by outcome</div></div>
+      <div class="legend"><span><i style="background:var(--ok)"></i>Successful</span><span><i style="background:var(--info)"></i>No record</span><span><i style="background:var(--err)"></i>Failed</span></div></div>
+    <div class="panel-body"><div class="chart-box" id="activity-box"><canvas id="activity-chart" aria-label="Daily DNS query activity"></canvas></div></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><h2>Success vs failure</h2><div class="sub">All stored attempts</div></div></div>
+    <div class="panel-body"><div class="chart-box" id="outcome-box"><canvas id="outcome-chart" aria-label="Outcome distribution"></canvas></div><div id="outcome-legend" style="margin-top:12px"></div></div>
+  </section>
+</div>
+
+<div class="grid cols-main-side">
+  <section class="panel">
+    <div class="panel-head"><div><h2>Resolver performance comparison</h2><div class="sub">Median latency of successful attempts, all tests</div></div><div id="perf-legend"></div></div>
+    <div class="panel-body"><div class="chart-box sm" id="perf-box"><canvas id="perf-chart" aria-label="Median latency by resolver"></canvas></div></div>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><h2>Resolver health</h2><div class="sub" id="health-sub">From recent observations</div></div></div>
+    <div class="panel-body"><div class="health" id="health"><div class="skeleton sk-block" style="height:150px"></div></div></div>
+  </section>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><div><h2>Recent DNS tests</h2><div class="sub">Latest eight tests</div></div><a class="btn btn-sm" href="/history">View all history</a></div>
+  <div class="panel-body flush" id="recent"><div style="padding:0 20px 20px"><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div><div class="skeleton sk-line"></div></div></div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>{% endblock %}
